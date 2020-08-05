@@ -597,10 +597,23 @@ func (a AzureClient) CreateVirtualMachine(ctx context.Context, resourceGroup, na
 		osProfile.CustomData = to.StringPtr(customData)
 	}
 
+	var plan *compute.Plan
+	if *imgReference.Publisher == "center-for-internet-security-inc" {
+		plan = &compute.Plan{
+			Name: imgReference.Sku, // Name - The plan ID.
+			// Publisher - The publisher ID.
+			Publisher: imgReference.Publisher,
+			// Product - Specifies the product of the image from the marketplace. This is the same value as Offer under the imageReference element.
+			Product: imgReference.Offer,
+			// PromotionCode: '' // PromotionCode - The promotion code.
+		}
+	}
+
 	virtualMachinesClient := a.virtualMachinesClient()
 	future, err := virtualMachinesClient.CreateOrUpdate(ctx, resourceGroup, name,
 		compute.VirtualMachine{
 			Location: to.StringPtr(location),
+			Plan:     plan,
 			VirtualMachineProperties: &compute.VirtualMachineProperties{
 				AvailabilitySet: &compute.SubResource{
 					ID: to.StringPtr(availabilitySetID),
